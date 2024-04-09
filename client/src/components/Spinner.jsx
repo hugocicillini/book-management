@@ -1,8 +1,9 @@
 import React from 'react'
+import { Spinner as BsSpinner } from 'react-bootstrap'
 
-const Spinner = () => {
+const Spinner = ({ size }) => {
   return (
-    <div className='animate-ping w-16 h-16 m-8 rounded-full bg-sky-600'>Spinner</div>
+    <BsSpinner animation="border" variant="secondary" size={size ? size : 'lg'} />
   )
 }
 

@@ -1,7 +1,10 @@
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
+
 import BackButton from '../components/BackButton';
 import Spinner from '../components/Spinner';
 
@@ -11,77 +14,115 @@ const CreateBooks = () => {
   const [publishYear, setPublishYear] = useState('');
   const [synopsis, setSynopsis] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+
   const { enqueueSnackbar } = useSnackbar();
 
+  const handleInputChange = (e) => {
+    let inputVal = e.target.value;
+
+    inputVal = inputVal.replace(/\D/g, '');
+
+    if (inputVal.length >= 2) {
+      inputVal = inputVal.substring(0, 2) + '/' + inputVal.substring(2);
+    }
+
+    if (inputVal.length >= 5) {
+      inputVal = inputVal.substring(0, 5) + '/' + inputVal.substring(5);
+    }
+
+    inputVal = inputVal.substring(0, 10);
+    setPublishYear(inputVal);
+  };
+
+  const handleKeyDown = (e) => {
+    const selectionStart = e.target.selectionStart;
+    const selectionEnd = e.target.selectionEnd;
+
+    if (e.key === 'Backspace' && (selectionStart === 3 || selectionEnd === 3)) {
+      e.preventDefault();
+      setPublishYear(prevState => prevState.slice(0, 2) + prevState.slice(3));
+    }
+
+    if (e.key === 'Backspace' && (selectionStart === 6 || selectionEnd === 6)) {
+      e.preventDefault();
+      setPublishYear(prevState => prevState.slice(0, 5) + prevState.slice(6));
+    }
+  };
+
   const handleSaveBook = () => {
-    const data = {
-      title,
-      author,
-      publishYear,
-      synopsis
-    };
+    if (!title || !author || !publishYear) {
+      enqueueSnackbar('Por favor, preencha todos os campos obrigatórios.', { variant: 'error', autoHideDuration: 3000 });
+      return;
+    }
+
+    const data = { title, author, publishYear, synopsis };
+
     setLoading(true);
-    axios
-      .post('http://localhost:5000/books', data)
+
+    axios.post('http://localhost:5000/books', data)
       .then(() => {
         setLoading(false);
-        enqueueSnackbar('Registro de Livro criado com sucesso', { variant: 'success' });
-        navigate('/');
+        enqueueSnackbar('Registro Criado!', { variant: 'success', autoHideDuration: 3000 });
       })
       .catch((error) => {
         setLoading(false);
-        enqueueSnackbar('Error', { variant: 'error' });
-        console.log(error);
+        enqueueSnackbar(error, { variant: 'error', autoHideDuration: 3000, preventDuplicate: true });
       });
   };
 
   return (
-    <div className='p-4'>
-      <BackButton />
-      <h1 className='text-3xl my-4'>Criar Registro de Livro</h1>
-      {loading ? <Spinner /> : ''}
-      <div className='flex flex-col border-2 border-slate-600 rounded-xl w-[600px] p-4 mx-auto'>
-        <div className='my-4'>
-          <label className='text-xl mr-4 text-gray-500'>Título</label>
-          <input
+    <div className='mt-24'>
+      <div className='flex flex-col border-1 border-slate-600 rounded-md shadow-lg w-1/3 p-4 m-auto'>
+        <BackButton />
+
+        <h1 className='text-2xl m-auto mb-4'>Criar Registro</h1>
+
+        <Form.Group className='my-2'>
+          <Form.Label>Título</Form.Label>
+          <Form.Control
             type='text'
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className='border-2 border-gray-500 px-4 py-2 w-full rounded-lg'
           />
-        </div>
-        <div className='my-4'>
-          <label className='text-xl mr-4 text-gray-500'>Autor</label>
-          <input
+        </Form.Group>
+
+        <Form.Group className='my-2'>
+          <Form.Label>Autor</Form.Label>
+          <Form.Control
             type='text'
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
-            className='border-2 border-gray-500 px-4 py-2 w-full rounded-lg'
           />
-        </div>
-        <div className='my-4'>
-          <label className='text-xl mr-4 text-gray-500'>Ano de Publicação</label>
-          <input
+        </Form.Group>
+
+        <Form.Group className='my-2'>
+          <Form.Label>Data de Publicação</Form.Label>
+          <Form.Control
             type='text'
-            maxLength={4}
             value={publishYear}
-            onChange={(e) => setPublishYear(e.target.value)}
-            className='border-2 border-gray-500 px-4 py-2 w-full rounded-lg'
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
           />
-        </div>
-        <div className='my-4'>
-          <label className='text-xl mr-4 text-gray-500'>Sinopse</label>
-          <input
-            type='text'
+        </Form.Group>
+
+        <Form.Group className='my-2'>
+          <Form.Label>Sinopse</Form.Label>
+          <Form.Control
+            as='textarea'
+            rows={6}
             value={synopsis}
             onChange={(e) => setSynopsis(e.target.value)}
-            className='border-2 border-gray-500 px-4 py-2 w-full rounded-lg'
+            className='resize-none'
           />
-        </div>
-        <button className='p-2 bg-slate-600 m-8 text-white rounded-3xl' onClick={handleSaveBook}>
-          Salvar
-        </button>
+        </Form.Group>
+
+        <Button onClick={handleSaveBook} variant='dark' className='bg-gray-800'>Salvar</Button>
+
+        <span className="m-auto mt-2">
+          {
+            loading && <Spinner size='sm' />
+          }
+        </span>
       </div>
     </div>
   );
